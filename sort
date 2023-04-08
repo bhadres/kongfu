@@ -1,0 +1,39 @@
+package main
+
+import (
+	"bufio"
+	"bytes"
+	"fmt"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+	"testing"
+
+	"github.com/rogpeppe/go-internal/txtar"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/multierr"
+)
+
+func TestIntegration(t *testing.T) {
+	const testdata = "testdata"
+
+	infos, err := os.ReadDir(testdata)
+	require.NoErrorf(t, err, "failed to ls %q", testdata)
+
+	// Disable Go modules so that we don't try to fetch against tests.
+	oldModule := os.Getenv("GO111MODULE")
+	os.Setenv("GO111MODULE", "off")
+	defer os.Setenv("GO111MODULE", oldModule)
+
+	for _, info := range infos {
+		if info.IsDir() || info.Name() == "README.md" {
+			continue
+		}
+
+		t.Run(info.Name(), func(t *testing.T) {
+			runIntegrationTest(t, filepath.Join(testdata, info.Name()))
+		})
+	}
+}
